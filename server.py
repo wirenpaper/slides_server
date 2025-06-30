@@ -2,6 +2,44 @@
 import uvicorn
 from fastapi import FastAPI, HTTPException
 import uno
+import sys
+
+CACHED_NOTES_ARRAY = []
+
+# --- This is a new function to do the heavy lifting ONCE ---
+def load_all_notes_into_cache(): ### NEW ###
+    """Connects to Impress ONCE at startup to load all notes into memory."""
+    global CACHED_NOTES_ARRAY
+    print("\n--- Server starting: Attempting to cache all notes from Impress... ---")
+    
+    try:
+        # This code is borrowed from your get_slideshow_controller function
+        local_context = uno.getComponentContext()
+        resolver = local_context.ServiceManager.createInstanceWithContext(
+            "com.sun.star.bridge.UnoUrlResolver", local_context)
+        ctx = resolver.resolve("uno:socket,host=localhost,port=2002;urp;StarOffice.ComponentContext")
+        desktop = ctx.ServiceManager.createInstanceWithContext("com.sun.star.frame.Desktop", ctx)
+        document = desktop.getCurrentComponent()
+
+        if not document or not document.supportsService("com.sun.star.presentation.PresentationDocument"):
+             raise Exception("Active document is not a presentation.")
+
+        all_slides = document.getDrawPages()
+        for i in range(all_slides.getCount()):
+            slide = all_slides.getByIndex(i)
+            notes_page = slide.getNotesPage()
+            current_notes = ""
+            for shape in notes_page:
+                if shape.supportsService("com.sun.star.presentation.NotesShape"):
+                    current_notes += shape.getString()
+            CACHED_NOTES_ARRAY.append(current_notes.strip())
+        
+        print(f"[SUCCESS] Cached notes for {len(CACHED_NOTES_ARRAY)} slides.")
+
+    except Exception as e:
+        print(f"[FATAL ERROR] Could not connect to Impress to cache notes: {e}")
+        print("Please ensure LibreOffice is running with a port and a presentation is open.")
+        sys.exit(1) # Exit the script if we can't load the notes.
 
 # --- UNO Connection Setup ---
 # --- UNO Connection Setup (NEW DEBUG VERSION) ---
@@ -88,11 +126,19 @@ async def get_slide_state():
     # Return ONLY the slide number
     return {"slide_index": current_index}
 
+# --- Add the new endpoint for serving the cached notes ---
+@app.get("/all_notes") ### NEW ###
+async def get_all_notes_from_cache():
+    """Instantly returns the pre-loaded array of notes from server memory."""
+    print("Controller requested all notes. Serving from cache.")
+    return CACHED_NOTES_ARRAY
+
 # --- To run the server ---
 if __name__ == "__main__":
     # Find your computer's IP address (e.g., 192.168.1.10)
     # and run the server on that host so other devices can see it.
     # Using "0.0.0.0" makes it accessible on your local network.
+    load_all_notes_into_cache()
     print("Server starting...")
     print("Make sure LibreOffice is running with a listening port and a slideshow is active.")
     uvicorn.run(app, host="0.0.0.0", port=8000)
