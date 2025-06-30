@@ -75,23 +75,18 @@ async def previous_slide():
     controller.gotoPreviousEffect()
     return {"status": "returned to previous"}
 
-@app.get("/prompt")
-async def get_speaker_notes():
-    """Gets the speaker notes for the currently displayed slide."""
-    controller, document = get_slideshow_controller()
-    if not controller or not document:
+@app.get("/state")
+async def get_slide_state():
+    """Returns the current state of the slideshow, specifically the slide index."""
+    controller, _ = get_slideshow_controller()
+    if not controller:
         raise HTTPException(status_code=404, detail="Slideshow not running or not found.")
 
-    current_slide_page = controller.getCurrentSlide()
-    notes_page = current_slide_page.getNotesPage()
-    
-    notes_text = ""
-    # Iterate through shapes on the notes page to find the text
-    for shape in notes_page:
-        if shape.supportsService("com.sun.star.presentation.NotesShape"):
-             notes_text += shape.getString()
+    # Get the current slide index (slide 1 is index 0)
+    current_index = controller.getCurrentSlideIndex()
 
-    return {"notes": notes_text.strip()}
+    # Return ONLY the slide number
+    return {"slide_index": current_index}
 
 # --- To run the server ---
 if __name__ == "__main__":
