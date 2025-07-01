@@ -6,14 +6,14 @@ import sys
 
 CACHED_NOTES_ARRAY = []
 
-# --- This is a new function to do the heavy lifting ONCE ---
-def load_all_notes_into_cache(): ### NEW ###
+# The NEW and IMPROVED function for your server.py
+
+def load_all_notes_into_cache():
     """Connects to Impress ONCE at startup to load all notes into memory."""
     global CACHED_NOTES_ARRAY
     print("\n--- Server starting: Attempting to cache all notes from Impress... ---")
     
     try:
-        # This code is borrowed from your get_slideshow_controller function
         local_context = uno.getComponentContext()
         resolver = local_context.ServiceManager.createInstanceWithContext(
             "com.sun.star.bridge.UnoUrlResolver", local_context)
@@ -29,9 +29,13 @@ def load_all_notes_into_cache(): ### NEW ###
             slide = all_slides.getByIndex(i)
             notes_page = slide.getNotesPage()
             current_notes = ""
+            # Loop through all shapes on the notes page
             for shape in notes_page:
-                if shape.supportsService("com.sun.star.presentation.NotesShape"):
+                # --- THIS IS THE ONLY LINE THAT CHANGED ---
+                # Instead of looking for a specific 'NotesShape', we check if it supports Text.
+                if shape.supportsService("com.sun.star.drawing.Text"):
                     current_notes += shape.getString()
+            
             CACHED_NOTES_ARRAY.append(current_notes.strip())
         
         print(f"[SUCCESS] Cached notes for {len(CACHED_NOTES_ARRAY)} slides.")
@@ -39,7 +43,7 @@ def load_all_notes_into_cache(): ### NEW ###
     except Exception as e:
         print(f"[FATAL ERROR] Could not connect to Impress to cache notes: {e}")
         print("Please ensure LibreOffice is running with a port and a presentation is open.")
-        sys.exit(1) # Exit the script if we can't load the notes.
+        sys.exit(1)
 
 # --- UNO Connection Setup ---
 # --- UNO Connection Setup (NEW DEBUG VERSION) ---
