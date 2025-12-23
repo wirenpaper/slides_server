@@ -3,6 +3,7 @@ import uvicorn
 from fastapi import FastAPI, HTTPException
 import uno
 import sys
+from fastapi.middleware.cors import CORSMiddleware
 
 CACHED_NOTES_ARRAY = []
 
@@ -98,6 +99,23 @@ def get_slideshow_controller():
         return None, None
 # --- FastAPI Application ---
 app = FastAPI()
+
+# --- THIS IS THE NEW CODE TO ADD ---
+# Configure CORS
+origins = [
+    "http://localhost",
+    "http://localhost:8000",
+    # You might also want to add your client's IP if it's served from there
+    # "http://192.168.100.X", # Replace with the client's actual IP
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 
 @app.get("/control/next")
 async def next_slide():

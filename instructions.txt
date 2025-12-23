@@ -1,0 +1,16 @@
+## find ip address look at label wlp0s20f3 with format like 192.168.100.7
+## then change SERVER_IP accordingly to that ip address in script.js in slides_controller on other computer
+ip a
+
+## start libreoffice like this
+libreoffice --accept="socket,host=localhost,port=2002;urp;"
+slidesetter
+
+
+## start server.py
+s server.py
+
+
+## and for the server on slides_controller, for the other computer:
+python3 -m http.server
+
