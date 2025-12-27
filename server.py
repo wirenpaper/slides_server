@@ -25,6 +25,8 @@ def load_all_notes_into_cache():
         if not document or not document.supportsService("com.sun.star.presentation.PresentationDocument"):
              raise Exception("Active document is not a presentation.")
 
+        #document.getPresentation.start()
+
         all_slides = document.getDrawPages()
         for i in range(all_slides.getCount()):
             slide = all_slides.getByIndex(i)
@@ -111,7 +113,7 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers

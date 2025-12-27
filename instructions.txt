@@ -12,5 +12,5 @@ s server.py
 
 
 ## and for the server on slides_controller, for the other computer:
-python3 -m http.server
+python -m http.server
 
